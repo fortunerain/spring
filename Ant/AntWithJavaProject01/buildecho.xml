@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="run" name="AntMain Project TESTING WITH ANT">
+<!--
+	-DUSER_VALUE="hello dean's world!" 
+-->
+	<target name="run">
+		<echo> hello dean!, this is echo.</echo>
+		<echo>${USER_VALUE}</echo>
+	</target>
+</project>

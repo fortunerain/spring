@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="jar" name="AntMain Project TESTING WITH ANT">
+<!--
+	-DUSER_VALUE="hello dean's world!"
+	make jar, run jar
+	manifest : Main-Class, value
+	java -jar app.jar	
+-->
+	<target name="jar">
+		<echo> hello dean!, this is making-jar testing.</echo>
+		<!--<jar destfile="./app.jar" basedir="staging"/>-->
+		<jar destfile="./app.jar" basedir="staging">
+			<manifest>
+			      <attribute name="Main-Class" value="com.dean.ant.AntMain"/>
+			</manifest>
+		</jar>
+	</target>
+	<target name="run jar">
+		 <java jar="app.jar" fork="true" failonerror="true" maxmemory="128m" />
+	</target>
+	
+
+</project>

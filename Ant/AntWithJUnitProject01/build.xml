@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="main" name="Junit Testing Project TESTING WITH ANT">
+	
+	<target name="main" depends="runjunit">
+		<echo> "done" </echo>
+	</target>
+	
+	<target name="runjunit" depends="compile" >
+		<junit printsummary="on">
+		<!-- <junit printsummary="on" haltonfailure="yes">-->
+			<test name="com.dean.test.TestCustomer" />
+			<classpath>
+				<pathelement location="C:\02. Spring201404\eclipse-jee-kepler-SR2-win32\eclipse\plugins\org.junit_4.11.0.v201303080030\junit.jar"/>
+				<pathelement location="C:\02. Spring201404\eclipse-jee-kepler-SR2-win32\eclipse\plugins\org.hamcrest.core_1.3.0.v201303031735.jar"/>
+				<pathelement location="staging"/>
+			</classpath>
+		</junit>
+	</target>
+	<target name="compile">
+		<javac includeantruntime="false" srcdir="./src" destdir="staging" classpath="C:\02. Spring201404\eclipse-jee-kepler-SR2-win32\eclipse\plugins\org.junit_4.11.0.v201303080030\junit.jar"/>
+	</target>	
+</project>

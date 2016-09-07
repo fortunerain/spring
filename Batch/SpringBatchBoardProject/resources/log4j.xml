@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+	<!-- Error File Appender -->
+	<appender name="errorFile" class="org.apache.log4j.DailyRollingFileAppender">
+		<!-- Date pattern policy -->
+		<param name="DatePattern" value=".yyyy-MM-dd" />
+
+		<param name="File" value="C:/myprojectLogs/board_error.log" />
+		<!-- Log append -->
+		<param name="Append" value="true" />
+		
+		<param name="threshold" value="error" />
+
+		<!-- Log layout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %5p %c{1} - %m%n" />
+		</layout>
+	</appender>
+	
+	<!-- Info / debug File Appender -->
+	<appender name="debugInfoFile" class="org.apache.log4j.DailyRollingFileAppender">
+		<!-- Date pattern policy -->
+		<param name="DatePattern" value=".yyyy-MM-dd" />
+		<param name="File" value="C:/myprojectLogs/board_debug_info.log" />
+		<!-- Log append -->
+		<param name="Append" value="true" />
+		
+		<!-- Log layout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %5p %c{1} - %m%n" />
+		</layout>
+		
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="DEBUG" />
+			<param name="LevelMax" value="INFO" />
+		</filter>
+	</appender>
+
+	<!--Console log appender -->
+	<appender name="stdout" class="org.apache.log4j.ConsoleAppender">
+		<!-- Default log level -->
+		<param name="threshold" value="debug" />
+		<!-- log layout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %5p %c{1} - %m%n" />
+		</layout>
+	</appender>
+
+	<!-- XML 형태로 로그 파일 남기기 -->
+    <appender name="logfileToxml" class="org.apache.log4j.FileAppender">
+    	<param name="DatePattern" value=".yyyyMMdd" />
+        <param name="file" value="C:/myprojectLogs/board_error_log.xml"/>
+        <param name="Append" value="true"/>
+		<param name="threshold" value="error" />
+		
+<!--         <layout class="org.apache.log4j.xml.XMLLayout"/> -->
+		<layout class="com.accenture.kdc.common.util.CommXmlLayout"/>
+    </appender>
+    
+	<root>
+		<appender-ref ref="stdout" />
+		<appender-ref ref="errorFile" />
+		<appender-ref ref="debugInfoFile" />
+		<appender-ref ref="logfileToxml" />
+	</root>
+	
+</log4j:configuration>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:batch="http://www.springframework.org/schema/batch"
+xmlns:task="http://www.springframework.org/schema/task"
+xmlns:context="http://www.springframework.org/schema/context"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.springframework.org/schema/batch
+http://www.springframework.org/schema/batch/spring-batch-2.1.xsd
+http://www.springframework.org/schema/task
+http://www.springframework.org/schema/task/spring-task-3.2.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-2.5.xsd
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+
+	<context:component-scan base-package="com.accenture.kdc.batch" />
+	
+	<!-- ############################################################################# -->
+	<!-- ################################# XML TO DB ################################# -->
+	<!-- ############################################################################# -->
+	<bean id="multiResourceReader" class="org.springframework.batch.item.file.MultiResourceItemReader" scope="step">
+		<!--  job parameter에 날짜 형식으로 담음 -->
+		<property name="resources" value="file:///myprojectLogs/board_error_log.xml.#{jobParameters[date]}" />
+		<!-- 파싱 실패시에 종료한다. -->
+		<property name="strict" value="false" />
+		<property name="delegate" ref="boardXmlReader" />
+	</bean>
+	
+    <bean id="boardXmlReader" class="org.springframework.batch.item.xml.StaxEventItemReader">
+    	<!-- root element가 board 이다. -->
+    	<property name="fragmentRootElementName" value="board" />
+    	<property name="strict" value="false" />
+    	<!-- <property name="resource" value="classpath:failover/failover.xml" /> -->
+    	<!-- 마샬링은 xml 형태로 만드는거, 언마샬링은 xml형태를 파싱하는거(class 형태에 셋팅해줌) -->
+    	<property name="unmarshaller" ref="boardUnmarshaller" />
+    </bean>
+    
+    <bean id="boardUnmarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+    	<property name="classesToBeBound">
+    		<list>
+    		<!-- 아래 경로에 바운드 시키게 되는데 아래 클래스에 어노테이션 설정을 해줘야 한다. -->
+    			<value>com.accenture.kdc.board.vo.BoardBatchModel</value>
+    		</list>
+    	</property>
+    </bean>
+ 
+    <bean id="boardProcessor" class="com.accenture.kdc.batch.chunk.BoardItemProcessor" />
+ 
+    <bean id="boardDBWriter" class="org.springframework.batch.item.database.JdbcBatchItemWriter">
+    	<property name="dataSource" ref="dataSource" />
+    	<property name="sql">
+    		<value>
+    			<![CDATA[
+    				INSERT INTO board (Title, Content, Writer, Password, regdate) VALUES (:title, :content, :writer, :password, :regDate)
+    			]]>
+    		</value>
+    	</property>
+    	<!-- jdbc에서 제공하는 파라미터를 sql 구문에 매핑? 시켜주는 놈 -->
+    	<property name="itemSqlParameterSourceProvider">
+    		<bean class="org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider" />
+    	</property>
+    </bean>
+    
+    <bean id="renameXmlTasklet" class="com.accenture.kdc.batch.tasklet.RenameXmlTasklet" scope="step">
+    	<property name="directory" value="file:///myprojectLogs/#{jobParameters[date]}" />
+    </bean>
+    
+ 	<batch:job id="xmlFileToDBJob" incrementer="boardJobParametersIncrementer" restartable="true">
+<!--  		<batch:step id="xmlFileToDBStep1" next="xmlFileToDBStep2"> -->
+ 		<batch:step id="xmlFileToDBStep1">
+ 			<batch:tasklet>
+ 				<batch:chunk reader="multiResourceReader" processor="boardProcessor" writer="boardDBWriter" skip-limit="10" commit-interval="10">
+	 				<batch:skippable-exception-classes>
+	 					<batch:include class="java.lang.Exception"/>
+	 				</batch:skippable-exception-classes>
+ 				</batch:chunk>
+ 			</batch:tasklet>
+ 		</batch:step>
+ 		<!-- <batch:step id="xmlFileToDBStep2">
+ 			<batch:tasklet ref="renameXmlTasklet" />
+ 		</batch:step> -->
+ 	</batch:job>
+ 	
+ 	<!-- ############################################################################# -->
+	<!-- ################################# XML TO CSV ################################ -->
+	<!-- ############################################################################# -->
+ 	<bean id="boardCsvWriter" class="org.springframework.batch.item.file.FlatFileItemWriter" scope="step">
+		<property name="resource" value="file:///myprojectLogs/#{jobParameters[date]}/failover.csv" />
+		<property name="shouldDeleteIfExists" value="true" />
+		<property name="lineAggregator">
+			<bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+				<property name="delimiter" value="," />
+				<property name="fieldExtractor">
+					<bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+						<property name="names" value="title,content,writer,regDate,password" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+	
+	<batch:job id="xmlFileToCsvFileJob" incrementer="boardJobParametersIncrementer" restartable="true">
+ 		<batch:step id="csvFileToCsvFileStep">
+ 			<batch:tasklet>
+ 				<batch:chunk reader="multiResourceReader" processor="boardProcessor" writer="boardCsvWriter" skip-limit="10" commit-interval="10">
+	 				<batch:skippable-exception-classes>
+	 					<batch:include class="java.lang.Exception"/>
+	 				</batch:skippable-exception-classes>
+ 				</batch:chunk>
+ 			</batch:tasklet>
+ 		</batch:step>
+ 	</batch:job>
+ 	
+ 	<!-- ############################################################################# -->
+	<!-- ################################# CSV TO DB ################################# -->
+	<!-- ############################################################################# -->
+ 	<bean id="board" class="com.accenture.kdc.batch.domain.Board" scope="prototype" />
+ 	
+ 	<bean id="boardCsvReader" class="org.springframework.batch.item.file.FlatFileItemReader" scope="step">
+		<property name="resource" value="file:///myprojectLogs/#{jobParameters[date]}/failover.csv" />
+		<property name="strict" value="false" />
+		<property name="lineMapper">
+			<bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="names" value="title,content,writer,regDate,password" />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean class="org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper">
+						<property name="prototypeBeanName" value="board" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+	
+	<bean id="renameCsvTasklet" class="com.accenture.kdc.batch.tasklet.RenameCsvTasklet" scope="step">
+    	<property name="directory" value="file:///myprojectLogs/#{jobParameters[date]}" />
+    </bean>
+	
+	<batch:job id="csvFileToDBJob" incrementer="boardJobParametersIncrementer" restartable="true">
+ 		<batch:step id="csvFileToDBStep1" next="csvFileToDBStep2">
+ 			<batch:tasklet>
+ 				<batch:chunk reader="boardCsvReader" processor="boardProcessor" writer="boardDBWriter" skip-limit="10" commit-interval="10">
+	 				<batch:skippable-exception-classes>
+	 					<batch:include class="java.lang.Exception"/>
+	 				</batch:skippable-exception-classes>
+ 				</batch:chunk>
+ 			</batch:tasklet>
+ 		</batch:step>
+ 		<batch:step id="csvFileToDBStep2">
+ 			<batch:tasklet ref="renameCsvTasklet" />
+ 		</batch:step>
+ 	</batch:job>
+	
+	<!-- ############################################################################# -->
+	<!-- ################################# DB TO DB ################################## -->
+	<!-- ############################################################################# -->
+ 	
+ 	<bean id="boardDBReader" class="org.springframework.batch.item.database.JdbcCursorItemReader" scope="step">
+		<property name="dataSource" ref="dataSource" />
+		<property name="sql">
+    		<value>
+    			<![CDATA[
+    				SELECT DATE_FORMAT(regdate, '%Y%m%d') AS statisticsDate, COUNT(1) AS articleCount
+    				  FROM board
+    				 WHERE DATE_FORMAT(regdate, '%Y%m%d') = #{jobParameters[date]}
+    			]]>
+    		</value>
+    	</property>
+    	<property name="rowMapper">
+    		<bean class="com.accenture.kdc.batch.rowMapper.BoardRowMapper" />
+    	</property>
+	</bean>
+	
+	<bean id="statisticsDBWriter" class="org.springframework.batch.item.database.JdbcBatchItemWriter">
+    	<property name="dataSource" ref="dataSource" />
+    	<property name="sql">
+    		<value>
+    			<![CDATA[
+    				INSERT INTO statistics (statistics_date, article_count) VALUES (:statisticsDate, :articleCount)
+    				ON DUPLICATE KEY UPDATE statistics_date = :statisticsDate, article_count = :articleCount
+    			]]>
+    		</value>
+    	</property>
+    	<property name="itemSqlParameterSourceProvider">
+    		<bean class="org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider" />
+    	</property>
+    </bean>
+    
+	<batch:job id="dbToDBJob" incrementer="boardJobParametersIncrementer" restartable="true">
+ 		<batch:step id="dbToDBStep">
+ 			<batch:tasklet>
+ 				<batch:chunk reader="boardDBReader" writer="statisticsDBWriter" skip-limit="10" commit-interval="10">
+	 				<batch:skippable-exception-classes>
+	 					<batch:include class="java.lang.Exception"/>
+	 				</batch:skippable-exception-classes>
+ 				</batch:chunk>
+ 			</batch:tasklet>
+ 		</batch:step>
+ 	</batch:job>
+ 	
+ 	<!-- ############################################################################# -->
+	<!-- ################################# SCHEDULER ################################# -->
+	<!-- ############################################################################# -->
+	<bean id="runScheduler" class="com.accenture.kdc.batch.scheduler.RunScheduler">
+		<property name="job" ref="xmlFileToDBJob" />
+	</bean>
+	<task:scheduled-tasks>
+		<task:scheduled ref="runScheduler" method="run" 
+		cron="30 06 * * * *" />
+	</task:scheduled-tasks>
+	
+</beans>
