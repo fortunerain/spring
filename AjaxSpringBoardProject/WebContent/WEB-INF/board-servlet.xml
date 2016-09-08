@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- 	<context:annotation-config /> -->
+	<!-- 
+		#############  1. component-scan으로 controller를 dispatcher servlet에 등록하는 방법 ##############   
+	    # base-package 기준으로 검색하면서 클래스 레벨 어노테이션들(@Controller, @Service, @Repository, @Component 등)
+		# 이 있는 것을 찾아서 spring bean으로 등록해준다.	 
+		# controller에서 @RequestMapping 을 통해 핸들링이 가능하다.(annotation-driven 이 필요함.)
+		###################################################################################################
+	-->
+	<!-- Support for @Autowire -->
+	<!-- <annotation-driven /> -->
+	<!-- <context:component-scan base-package="com.accenture.kdc" />   -->
+    
+    <!-- 
+    	##############  2. BeanNameUrlHandlerMapping : bean name을 통해 controller를 dispatcher servlet에 등록하는 방법 ##############
+        # controller에서 @RequestMapping 을 통해 핸들링을 할 수 없다.
+        # AbstractController 상속받아 handleRequestInternal 를 구현하는 형태로 가야한다.(Contorller를 implements하는 방법도 있음)
+        # bean name에 따른 controller 매핑이므로 1 대 1 관계로 형성된다.
+        ##############################################################################################################################  
+    -->
+	<!-- 
+	<beans:bean id="HandlerMapping" class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping" />
+	<beans:bean name="/writeForm" class="com.accenture.kdc.board.controller.BoardInsertController" />
+	<beans:bean id="boardDAO" class="com.accenture.kdc.board.dao.impl.BoardDAOImpl" />
+	<beans:bean id="boardService" class="com.accenture.kdc.board.service.impl.BoardServiceImpl">
+		<beans:property name="boardDAO" ref="boardDAO"></beans:property>
+	</beans:bean>
+	<beans:bean name="/board" class="com.accenture.kdc.board.controller.BoardController" >
+	 	<beans:property name="boardService" ref="boardService"></beans:property>
+	</beans:bean>
+	-->
+	
+	<!-- 
+		##############  3. controller 만 component-scan 으로 등록하는 방법 ######################################################################################
+		# controller만 component-scan으로 등록해주고, 나머지 service 나 dao 는 xml 파일에서 bean으로 등록해줌으로써
+		# dependency를 느슨하게 해준다. (service나 dao는 순수 pojo로 구현하여 다른 프레임웍에서도 사용가능하도록 해주고, controller는 어차피 화면에 종속적이므로
+		# component-scan 과 annotation을 사용하여 spring에 dependency를 걸어줘도 무방하다.)
+		# @Inject 어노테이션을 사용하기 위해서는 javax-inject.jar 파일이 필요하다.
+		##########################################################################################################################################################
+	 -->
+	<annotation-driven />
+	<context:component-scan base-package="com.accenture.kdc.board.controller" />	 
+	
+	<beans:bean id="boardDAO" class="com.accenture.kdc.board.dao.impl.BoardDAOImpl" />
+	<beans:bean id="boardService" class="com.accenture.kdc.board.service.impl.BoardServiceImpl">
+		<beans:property name="boardDAO" ref="boardDAO"></beans:property>
+	</beans:bean>
+	
+	
+	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
+	<resources mapping="/resources/**" location="/resources/" />
+	<resources mapping="/js/**" location="/WEB-INF/views/js/"/>
+
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	
+	<!-- MappingJacksonJsonView 설정 -->
+	<beans:bean id="jsonView" class="org.springframework.web.servlet.view.json.MappingJacksonJsonView"/> 
+</beans:beans>
