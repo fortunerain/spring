@@ -8,7 +8,7 @@ public class BoardMainClass {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//BoardController cont = new BoardController();
-		//cont.execute();
+//		BoardController cont = new BoardController();
+//		cont.execute();
 	}
 }
