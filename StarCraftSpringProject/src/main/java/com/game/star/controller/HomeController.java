@@ -12,9 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.game.star.model.User;
 
@@ -48,8 +46,26 @@ public class HomeController {
 	 * Simply selects the home view to render by returning its name.
 	 */
 	@RequestMapping(value = "/home2", method = RequestMethod.GET)
-	public ModelAndView home2() {
-		ModelAndView mv = new ModelAndView();
+	public Model home2(Model model) {
+		return model;
+	}
+	
+	/**
+	 * Simply selects the home view to render by returning its name.
+	 */
+	@RequestMapping(value = "/getData", method = RequestMethod.GET)
+	public Map<String,String> getData() {
+		
+//		String uuid = UUID.randomUUID().toString();
+		
+//		User user = new User();
+//		user.setId(uuid);
+//		user.setContent("Hello World");
+//		
+//		model.addAttribute("id", user.getId());
+//		model.addAttribute("content", user.getContent());	
+//		
+		
 		Map<String,String> model = new HashMap<String, String>();
 		String uuid = UUID.randomUUID().toString();
 		
@@ -62,8 +78,7 @@ public class HomeController {
 	    model.put("id", user.getId());
 	    model.put("content", user.getContent());
 		
-	    mv.addObject(model);
-		return mv;
+		return model;
 	}
 	
 }

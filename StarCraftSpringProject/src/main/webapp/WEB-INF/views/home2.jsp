@@ -15,10 +15,17 @@
 <body ng-app="myApp">
   <div class="container">
     <h1>Greeting</h1>
-    <div ng-controller="HomeController" ng-model="greeting" ng-cloak class="ng-cloak">
-      <p>The ID is {{greeting.id}}</p>
-      <p>The content is {{greeting.content}}</p>
+    <div ng-controller="ngController" ng-model="myData" ng-cloak class="ng-cloak">
+      <p>The ID is {{myData.id}}</p>
+      <p>The content is {{myData.content}}</p>
+      <span>name : </span>
+      <input type="text" ng-model="first"></input>
+      <input type="text" ng-model="last"></input>
+      <button ng-click="updateMessage()">Message</button>
+      <hr>
+      {{head + message}}
     </div>
+    <div ></div>
   </div>
   
   

@@ -1,17 +1,15 @@
-app.controller('HomeController',function($scope, $http) {
-	var main = this;
-	alert(main.id);
-    var reqPromise = $http.get('http://localhost:8080/star/home2');
-//$http서비스의 get 단축메소드를 사용하였다. 이전 코드보다 더욱 간결해진 것을 볼 수 있다.
-    alert(1);
-    alert($http);
-    alert($scope.userList);
-
-    reqPromise.success(function(data) {
-      $scope.userList = data;
-    });
-
-    reqPromise.error(function(data) {
-      console.error("Ajax 에러 발생");
-    });
+app.controller('ngController',function($scope, $http) {
+	//scope : 사전적 의미로 범위. jsp단의 ng-model으로 선언한 것과 관련있다.
+	
+	$scope.first="홍";
+	$scope.last="길동";
+	$scope.head="메세지 : ";
+	$scope.updateMessage = function(){
+		$scope.message = "hi"+$scope.first+$scope.last;
+		
+	    $http.get("/star/getData").then(function (response) {
+	        $scope.myData = response.data;
+	    });
+	    
+	};
 });
