@@ -1,4 +1,4 @@
-package com.game.star.controller;
+package com.minho.study.controller;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -14,11 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.game.star.model.User;
+import com.minho.study.model.User;
 
 /**
  * @RestController 는 스프링 4 버전에 있다. 이전 버전에는 미존재함.
  * 기존에 @Controller + @ResponseBody 를 대신해준다. 
+ * Json으로 데이터 응답한다.
  */
 @RestController
 public class HomeController {
@@ -55,16 +56,6 @@ public class HomeController {
 	 */
 	@RequestMapping(value = "/getData", method = RequestMethod.GET)
 	public Map<String,String> getData() {
-		
-//		String uuid = UUID.randomUUID().toString();
-		
-//		User user = new User();
-//		user.setId(uuid);
-//		user.setContent("Hello World");
-//		
-//		model.addAttribute("id", user.getId());
-//		model.addAttribute("content", user.getContent());	
-//		
 		
 		Map<String,String> model = new HashMap<String, String>();
 		String uuid = UUID.randomUUID().toString();

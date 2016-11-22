@@ -1,4 +1,4 @@
-package com.game.star.model;
+package com.minho.study.model;
 
 public class User {
 	String id;
